@@ -64,6 +64,7 @@ export default {
         "Authorization": `Bearer ${env.GITHUB_PAT}`,
         "Accept":        "application/vnd.github+json",
         "Content-Type":  "application/json",
+        "User-Agent":    "suumo-scraper-workers/1.0",
         "X-GitHub-Api-Version": "2022-11-28",
       },
       body: JSON.stringify(payload),
