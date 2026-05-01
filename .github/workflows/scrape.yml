@@ -1,0 +1,112 @@
+name: SUUMO Scraper
+
+on:
+  # Cloudflare Workers (またはフォームから) が REST API で起動する
+  workflow_dispatch:
+    inputs:
+      type:
+        description: '物件種別 (chuko / chintai)'
+        required: true
+        default: 'chintai'
+        type: choice
+        options:
+          - chintai
+          - chuko
+      urls:
+        description: 'スクレイピング URL ({}=ページ番号, カンマ区切りで複数可)'
+        required: false
+        default: ''
+      max_price:
+        description: '[中古] 価格上限 (万円)'
+        required: false
+        default: '10000'
+      max_rent:
+        description: '[賃貸] 家賃+管理費上限 (万円)'
+        required: false
+        default: '30'
+      max_age:
+        description: '築年数上限 (年)'
+        required: false
+        default: '40'
+      min_area:
+        description: '面積下限 (m²)'
+        required: false
+        default: '20'
+      max_toho:
+        description: '最寄駅徒歩上限 (分)'
+        required: false
+        default: '30'
+      email:
+        description: '通知送信先メールアドレス'
+        required: false
+        default: ''
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # ---- 中古マンション ----
+      - name: Run chuko scraper
+        if: ${{ github.event.inputs.type == 'chuko' }}
+        env:
+          DB_HOST:             ${{ secrets.DB_HOST }}
+          DB_PORT:             ${{ secrets.DB_PORT }}
+          DB_NAME:             ${{ secrets.DB_NAME }}
+          DB_USER:             ${{ secrets.DB_USER }}
+          DB_PASSWORD:         ${{ secrets.DB_PASSWORD }}
+          GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
+          GMAIL_ADDRESS:       ${{ secrets.GMAIL_ADDRESS }}
+          GMAIL_APP_PASSWORD:  ${{ secrets.GMAIL_APP_PASSWORD }}
+        run: |
+          ARGS="--max_price ${{ github.event.inputs.max_price }}"
+          ARGS="$ARGS --max_age ${{ github.event.inputs.max_age }}"
+          ARGS="$ARGS --min_area ${{ github.event.inputs.min_area }}"
+          ARGS="$ARGS --max_toho ${{ github.event.inputs.max_toho }}"
+          ARGS="$ARGS --output /tmp/map_chuko.html"
+          if [ -n "${{ github.event.inputs.urls }}" ]; then
+            ARGS="$ARGS --urls '${{ github.event.inputs.urls }}'"
+          fi
+          if [ -n "${{ github.event.inputs.email }}" ]; then
+            ARGS="$ARGS --email ${{ github.event.inputs.email }}"
+          fi
+          python main_chuko.py $ARGS
+
+      # ---- 賃貸 ----
+      - name: Run chintai scraper
+        if: ${{ github.event.inputs.type == 'chintai' }}
+        env:
+          DB_HOST:             ${{ secrets.DB_HOST }}
+          DB_PORT:             ${{ secrets.DB_PORT }}
+          DB_NAME:             ${{ secrets.DB_NAME }}
+          DB_USER:             ${{ secrets.DB_USER }}
+          DB_PASSWORD:         ${{ secrets.DB_PASSWORD }}
+          GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
+          GMAIL_ADDRESS:       ${{ secrets.GMAIL_ADDRESS }}
+          GMAIL_APP_PASSWORD:  ${{ secrets.GMAIL_APP_PASSWORD }}
+        run: |
+          ARGS="--max_rent ${{ github.event.inputs.max_rent }}"
+          ARGS="$ARGS --max_age ${{ github.event.inputs.max_age }}"
+          ARGS="$ARGS --min_m2 ${{ github.event.inputs.min_area }}"
+          ARGS="$ARGS --max_access ${{ github.event.inputs.max_toho }}"
+          ARGS="$ARGS --output /tmp/map_chintai.html"
+          if [ -n "${{ github.event.inputs.urls }}" ]; then
+            ARGS="$ARGS --urls '${{ github.event.inputs.urls }}'"
+          fi
+          if [ -n "${{ github.event.inputs.email }}" ]; then
+            ARGS="$ARGS --email ${{ github.event.inputs.email }}"
+          fi
+          python main_chintai.py $ARGS

@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SUUMO 物件検索</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+    background: #0f1117;
+    color: #e0e0e0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+  }
+
+  .card {
+    background: #1a1d27;
+    border: 1px solid #2e3140;
+    border-radius: 16px;
+    padding: 36px 32px;
+    width: 100%;
+    max-width: 520px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+  }
+
+  .logo {
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 6px;
+    letter-spacing: -0.3px;
+  }
+  .logo span { color: #4f8ef7; }
+
+  .subtitle {
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 28px;
+  }
+
+  /* 種別タブ */
+  .type-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+  .type-tab {
+    flex: 1;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1.5px solid #2e3140;
+    background: #13151f;
+    color: #888;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+  }
+  .type-tab.active {
+    background: #1d3d7a;
+    border-color: #4f8ef7;
+    color: #e8f0ff;
+  }
+
+  /* フォームグループ */
+  .form-group {
+    margin-bottom: 16px;
+  }
+  .form-group label {
+    display: block;
+    font-size: 12px;
+    color: #aaa;
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  .form-group input[type="number"],
+  .form-group input[type="email"],
+  .form-group input[type="text"] {
+    width: 100%;
+    padding: 10px 12px;
+    background: #13151f;
+    border: 1px solid #2e3140;
+    border-radius: 8px;
+    color: #e0e0e0;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .form-group input:focus {
+    border-color: #4f8ef7;
+  }
+
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* 条件パネル */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* 送信ボタン */
+  .submit-btn {
+    width: 100%;
+    margin-top: 8px;
+    padding: 14px;
+    background: #2563eb;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .submit-btn:hover  { background: #1d4ed8; }
+  .submit-btn:active { background: #1e40af; }
+  .submit-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
+
+  /* ステータス */
+  .status {
+    margin-top: 16px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    display: none;
+  }
+  .status.success { background: #0f3d25; border: 1px solid #1a7a45; color: #6ee7a0; }
+  .status.error   { background: #3d0f0f; border: 1px solid #7a1a1a; color: #e7a0a0; }
+
+  .note {
+    font-size: 11px;
+    color: #555;
+    margin-top: 20px;
+    text-align: center;
+    line-height: 1.6;
+  }
+
+  .filter-note {
+    font-size: 11px;
+    color: #666;
+    margin-top: 12px;
+    padding: 8px 10px;
+    background: #13151f;
+    border: 1px solid #2e3140;
+    border-radius: 6px;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">🏠 <span>SUUMO</span> 物件検索</div>
+  <div class="subtitle">条件を入力してメールで地図を受け取る</div>
+
+  <!-- 種別切り替え -->
+  <div class="type-tabs">
+    <div class="type-tab active" data-type="chintai" onclick="switchType('chintai')">🏢 賃貸</div>
+    <div class="type-tab"        data-type="chuko"   onclick="switchType('chuko')">🏗️ 中古マンション</div>
+  </div>
+
+  <form id="search-form" onsubmit="handleSubmit(event)">
+
+    <!-- 賃貸パネル -->
+    <div id="panel-chintai" class="panel active">
+      <div class="row2">
+        <div class="form-group">
+          <label>家賃上限（万円）</label>
+          <input type="number" id="max_rent" value="30" min="1" step="0.5">
+        </div>
+        <div class="form-group">
+          <label>築年数以内（年）</label>
+          <input type="number" id="max_age_chintai" value="30" min="1" step="1">
+        </div>
+      </div>
+      <div class="row2">
+        <div class="form-group">
+          <label>面積下限（m²）</label>
+          <input type="number" id="min_m2" value="20" min="1" step="5">
+        </div>
+        <div class="form-group">
+          <label>駅徒歩以内（分）</label>
+          <input type="number" id="max_access" value="30" min="1" step="1">
+        </div>
+      </div>
+    </div>
+
+    <!-- 中古マンションパネル -->
+    <div id="panel-chuko" class="panel">
+      <div class="row2">
+        <div class="form-group">
+          <label>価格上限（万円）</label>
+          <input type="number" id="max_price" value="8000" min="100" step="100">
+        </div>
+        <div class="form-group">
+          <label>築年数以内（年）</label>
+          <input type="number" id="max_age_chuko" value="40" min="1" step="1">
+        </div>
+      </div>
+      <div class="row2">
+        <div class="form-group">
+          <label>専有面積下限（m²）</label>
+          <input type="number" id="min_area" value="20" min="1" step="5">
+        </div>
+        <div class="form-group">
+          <label>駅徒歩以内（分）</label>
+          <input type="number" id="max_toho" value="30" min="1" step="1">
+        </div>
+      </div>
+    </div>
+
+    <p class="filter-note">※送信されるHTMLにはフィルター機能があるため、これは最低限のフィルタリング設定です</p>
+
+    <div class="form-group" style="margin-top: 16px;">
+      <label>メールアドレス（地図HTMLを送信します）</label>
+      <input type="email" id="email" placeholder="your@email.com" required>
+    </div>
+
+    <button type="submit" class="submit-btn" id="submit-btn">🔍 検索してメールで受け取る</button>
+  </form>
+
+  <div class="status" id="status-msg"></div>
+
+  <p class="note">
+    送信後、スクレイピング・地図生成に 15〜60分かかります。<br>
+    完了後、指定のメールアドレスに地図HTMLが届きます。
+  </p>
+</div>
+
+<script>
+  // ★ Cloudflare Workers の URL に書き換えてください ★
+  const WORKERS_URL = "https://jolly-waterfall-0b66.shum125-thriv.workers.dev/";
+
+  const MAX_PAGE = 2000;
+
+  let currentType = "chintai";
+
+  function switchType(type) {
+    currentType = type;
+    document.querySelectorAll(".type-tab").forEach(tab => {
+      tab.classList.toggle("active", tab.dataset.type === type);
+    });
+    document.querySelectorAll(".panel").forEach(panel => {
+      panel.classList.toggle("active", panel.id === `panel-${type}`);
+    });
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+
+    const btn = document.getElementById("submit-btn");
+    const status = document.getElementById("status-msg");
+
+    btn.disabled = true;
+    btn.textContent = "⏳ 送信中...";
+    status.style.display = "none";
+
+    const payload = {
+      type:      currentType,
+      max_page:  String(MAX_PAGE),
+      email:     document.getElementById("email").value,
+    };
+
+    if (currentType === "chintai") {
+      payload.max_rent   = document.getElementById("max_rent").value;
+      payload.max_age    = document.getElementById("max_age_chintai").value;
+      payload.min_area   = document.getElementById("min_m2").value;
+      payload.max_toho   = document.getElementById("max_access").value;
+    } else {
+      payload.max_price  = document.getElementById("max_price").value;
+      payload.max_age    = document.getElementById("max_age_chuko").value;
+      payload.min_area   = document.getElementById("min_area").value;
+      payload.max_toho   = document.getElementById("max_toho").value;
+    }
+
+    try {
+      const resp = await fetch(WORKERS_URL, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify(payload),
+      });
+      const data = await resp.json();
+
+      if (data.ok) {
+        status.className = "status success";
+        status.textContent = "✅ " + data.message;
+      } else {
+        status.className = "status error";
+        status.textContent = "❌ エラーが発生しました: " + (data.error || "不明なエラー");
+      }
+    } catch (err) {
+      status.className = "status error";
+      status.textContent = "❌ 通信エラー: " + err.message;
+    } finally {
+      status.style.display = "block";
+      btn.disabled = false;
+      btn.textContent = "🔍 検索してメールで受け取る";
+    }
+  }
+</script>
+</body>
+</html>

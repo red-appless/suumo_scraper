@@ -1,0 +1,6 @@
+requests
+beautifulsoup4
+pandas
+numpy
+psycopg2-binary
+line-bot-sdk
