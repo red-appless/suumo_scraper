@@ -18,7 +18,7 @@ import time
 
 from dao.db_connection import get_connection, initialize_tables
 from dao import property_chintai_dao as property_dao, location_dao
-from sub.scraper import Scraper
+from sub.chintai_scraper import ChintaiScraper
 from sub.geocoder import GeocodingProcessor
 from sub.generate_chintai_map import generate_map_html
 from sub.notifier import notify_completion
@@ -70,7 +70,7 @@ def main():
     property_dao.mark_all_as_old(conn)
 
     print("\n=== フェーズ 3: スクレイピング ===")
-    scraper = Scraper(url_templates=url_list, max_page=MAX_PAGE)
+    scraper = ChintaiScraper(url_templates=url_list, max_page=MAX_PAGE)
     df_raw = scraper.scrape_and_clean()
 
     if df_raw.empty:
