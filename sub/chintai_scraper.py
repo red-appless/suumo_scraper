@@ -1,5 +1,5 @@
 """
-sub/scraper.py
+sub/chintai_scraper.py
 SUUMOから賃貸物件情報をスクレイピングし、一次クレンジングを行うモジュール。
 """
 
@@ -79,7 +79,7 @@ def clean_access_time(access_str):
     return np.nan
 
 
-class Scraper:
+class ChintaiScraper:
     """SUUMOから賃貸物件情報をスクレイピングし、一次クレンジングを行うクラス"""
 
     def __init__(self, url_templates: list, max_page: int):
