@@ -32,17 +32,18 @@ export default {
       type       = "chintai",
       urls       = "",
       max_price  = "10000",
-      max_rent   = "10",
+      max_rent   = "30",
       max_age    = "40",
       min_area   = "20",
-      max_toho   = "15",
-      max_page   = "2000",
+      max_toho   = "30",
       email      = "",
     } = body;
 
     // GitHub Actions workflow_dispatch を呼ぶ
     const apiUrl = `https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/actions/workflows/scrape.yml/dispatches`;
 
+    // ※ inputs のキーは scrape.yml の inputs: に定義されたものだけを渡す
+    //   未定義キーを含めると GitHub API が 422 エラーを返しワークフローが起動しない
     const payload = {
       ref: "main",
       inputs: {
@@ -53,7 +54,6 @@ export default {
         max_age,
         min_area,
         max_toho,
-        max_page,
         email,
       },
     };

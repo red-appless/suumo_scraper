@@ -32,9 +32,17 @@ def setup_arg_parser():
     parser = argparse.ArgumentParser(
         description='SUUMOの中古マンション情報をスクレイピングし、DBに保存してマップを生成する'
     )
+    # 東京都 中古マンション全域
+    _URL_TOKYO    = ('https://suumo.jp/jj/bukken/ichiran/JJ012FC002/?ar=030&bknlistmodeflg=2&bs=011'
+                     '&cn=9999999&cnb=0&ekTjCd=&ekTjNm=&kb=1&kt=9999999&mb=0&mt=9999999'
+                     '&ta=13&tj=0&po=0&pj=1&pc=100&pn={}')
+    # 神奈川県 主要エリア 中古マンション
+    _URL_KANAGAWA = ('https://suumo.jp/jj/bukken/ichiran/JJ012FC002/?ar=030&bs=011&ta=14'
+                     '&bknlistmodeflg=2&cn=9999999&cnb=0&kb=1&kt=9999999&mb=0&mt=9999999'
+                     '&pc=100&pj=1&po=0&tj=0&pn={}')
     parser.add_argument('--urls', type=str,
-        default='https://suumo.jp/jj/kodate/ichiran/FR301FC001/?ar=030&bs=011&ta=13&page={}',
-        help='スクレイピング対象の SUUMO URL ({}=ページ番号)')
+        default=f'{_URL_TOKYO},{_URL_KANAGAWA}',
+        help='スクレイピング対象の SUUMO URL ({}=ページ番号、カンマ区切りで複数指定可)')
     parser.add_argument('--max_price',  type=float, default=10000.0, help='価格上限 (万円)')
     parser.add_argument('--max_age',    type=int,   default=40,      help='築年数上限 (年)')
     parser.add_argument('--min_area',   type=float, default=20.0,    help='専有面積下限 (m²)')

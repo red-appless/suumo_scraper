@@ -31,9 +31,26 @@ def setup_arg_parser():
     parser = argparse.ArgumentParser(
         description='SUUMOの賃貸物件情報をスクレイピングし、DBに保存してマップを生成する'
     )
+    # 東京23区（30万以下）
+    _URL_TOKYO    = ('https://suumo.jp/jj/chintai/ichiran/FR301FC001/?ar=030&bs=040&pc=30&smk=&po1=25&po2=99'
+                     '&shkr1=03&shkr2=03&shkr3=03&shkr4=03'
+                     '&sc=13101&sc=13102&sc=13103&sc=13104&sc=13105&sc=13113&sc=13106&sc=13107&sc=13108'
+                     '&sc=13118&sc=13121&sc=13122&sc=13123&sc=13109&sc=13110&sc=13111&sc=13112&sc=13114'
+                     '&sc=13115&sc=13120&sc=13116&sc=13117&sc=13119&sc=13202&sc=13203&sc=13204&sc=13206'
+                     '&sc=13208&sc=13209&sc=13210&sc=13211&sc=13213&sc=13214&sc=13215&sc=13219&sc=13222'
+                     '&sc=13224&sc=13225&sc=13229'
+                     '&ta=13&cb=0.0&ct=30.0&et=9999999&mb=30&mt=9999999&cn=9999999&fw2=&page={}')
+    # 神奈川県主要エリア（30万以下）
+    _URL_KANAGAWA = ('https://suumo.jp/jj/chintai/ichiran/FR301FC001/?url=/chintai/ichiran/FR301FC001/'
+                     '&ar=030&bs=040&pc=30&smk=&po1=25&po2=99&shkr1=03&shkr2=03&shkr3=03&shkr4=03'
+                     '&cb=0.0&ct=30.0&et=9999999&mb=30&mt=9999999&cn=20'
+                     '&ta=14'
+                     '&sc=14101&sc=14102&sc=14103&sc=14104&sc=14105&sc=14106&sc=14107&sc=14108&sc=14109'
+                     '&sc=14110&sc=14111&sc=14112&sc=14113&sc=14114&sc=14115&sc=14116&sc=14117&sc=14118'
+                     '&sc=14131&sc=14132&sc=14133&sc=14134&sc=14135&sc=14136&sc=14137&page={}')
     parser.add_argument('--urls', type=str,
-        default='https://suumo.jp/jj/chintai/ichiran/FR301FC001/?ar=030&bs=040&sngz=&ta=14&sa=02&page={}',
-        help='スクレイピング対象のSUUMO URL ({}=ページ番号)')
+        default=f'{_URL_TOKYO},{_URL_KANAGAWA}',
+        help='スクレイピング対象のSUUMO URL ({}=ページ番号、カンマ区切りで複数指定可)')
     parser.add_argument('--max_rent',   type=float, default=30.0,  help='家賃+管理費の最大値 (万円)')
     parser.add_argument('--max_age',    type=int,   default=30,    help='築年数の最大値 (年)')
     parser.add_argument('--min_m2',     type=float, default=20.0,  help='面積の最小値 (m2)')
